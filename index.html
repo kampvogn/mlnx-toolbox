@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mellanox MLAG Generator – 4 switche + Uplink MPO20 + Intersite MPO30 (Onyx + Cumulus)</title>
+  <!-- Asset version: opdater dette tal ved ændringer i styles.css eller app.js for at undgå stale Cloudflare cache. -->
+  <link rel="stylesheet" href="styles.css?v=1.0" />
+</head>
+<body>
+<header>
+  <h1>Mellanox MLAG Generator – 4 switche + Uplink (MPO20) + Intersite (MPO30) (Onyx + Cumulus)</h1>
+  <p>
+    A/B = Site1 MLAG-par, C/D = Site2 MLAG-par. Intersite-link laves som MLAG-port-channel (default MPO30).
+    Uplink mod upstream laves som MLAG-port-channel (default MPO20). Peerlink/IPL kører over Port-Channel (default Po10).
+  </p>
+</header>
+
+<main class="grid">
+  <section class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <h2>Inputs</h2>
+      <span class="pill" id="osPill">OS: Onyx</span>
+    </div>
+
+    <label>Hostnames</label>
+    <div class="row">
+      <div><input id="swA" value="A" /></div>
+      <div><input id="swB" value="B" /></div>
+    </div>
+    <div class="row">
+      <div><input id="swC" value="C" /></div>
+      <div><input id="swD" value="D" /></div>
+    </div>
+
+    <div class="btnrow">
+      <button class="secondary" id="tplSn2010">Template: SN2010 (Eth1/x)</button>
+      <button class="secondary" id="tplSn3400">Template: SN3420 (Eth1/x)</button>
+    </div>
+
+    <label>OS <span class="info-tip" data-tip="Vælg hvilket config-format der genereres.">i</span></label>
+    <div class="btnrow">
+      <button class="secondary active" id="osOnyx" type="button">Onyx</button>
+      <button class="secondary" id="osCumulus" type="button">Cumulus</button>
+    </div>
+
+    <div class="hint os-onyx">
+      Interface-navne i Onyx er typisk <span class="mono">Eth1/1</span>, <span class="mono">Eth1/2</span> osv. citeturn0search3
+    </div>
+
+    <details open>
+      <summary>MLAG par (Peerlink/IPL) <span class="info-tip" data-tip="Basis MLAG-indstillinger pr. switch-par.">i</span></summary>
+      <h2>Peerlink (IPL) pr MLAG-par</h2>
+      <div class="hint os-onyx">
+        Onyx: master vælges ud fra IPL VLAN interface IP (højeste IP). citeturn0search0<br>
+        Onyx: MLAG VIP keepalive bruger management-nettet (mgmt0). citeturn0search4
+      </div>
+
+      <div class="row os-onyx">
+        <div>
+          <label>Onyx: Peerlink Port-Channel ID <span class="info-tip" data-tip="Port-channel brugt til peerlink/IPL mellem MLAG peers.">i</span></label>
+          <input id="peerPo" value="10" />
+        </div>
+      </div>
+      <div class="row os-cumulus hidden">
+        <div>
+          <label>Cumulus: peerlink bond navn</label>
+          <input id="peerBond" value="peerlink" />
+        </div>
+        <div>
+          <label>Cumulus: peerlink VLAN</label>
+          <input id="peerVlan" value="4094" />
+        </div>
+      </div>
+
+      <h2 style="margin-top:10px">Pair1 (A/B)</h2>
+
+    <label class="os-onyx">Onyx peerlink porte</label>
+    <div class="row os-onyx">
+      <div><input id="onyxPeerPortsA" value="Eth1/21,Eth1/22" /></div>
+      <div><input id="onyxPeerPortsB" value="Eth1/21,Eth1/22" /></div>
+    </div>
+
+    <label class="os-cumulus hidden">Cumulus peerlink porte</label>
+    <div class="row os-cumulus hidden">
+      <div><input id="peerPortsA" value="swp21,swp22" /></div>
+      <div><input id="peerPortsB" value="swp21,swp22" /></div>
+    </div>
+
+    <label class="os-cumulus hidden">Pair1: Cumulus clagd-sys-mac</label>
+    <input class="os-cumulus hidden" id="sysmac1" value="44:38:39:BE:EF:A1" />
+
+    <label class="os-cumulus hidden">Pair1: Cumulus backup IP (peerens mgmt/lo IP)</label>
+    <div class="row os-cumulus hidden">
+      <div><input id="backupA" value="10.0.0.102" /></div>
+      <div><input id="backupB" value="10.0.0.101" /></div>
+    </div>
+
+    <label class="os-onyx">Pair1: Onyx IPL VLAN + IPs (/30)</label>
+    <div class="row3 os-onyx">
+      <div><input id="iplVlan1" value="4000" /></div>
+      <div><input id="iplIpA" value="1.1.1.1/30" /></div>
+      <div><input id="iplIpB" value="1.1.1.2/30" /></div>
+    </div>
+
+    <label class="os-onyx">Pair1: Onyx MLAG VIP navn + IP (mgmt0 subnet)</label>
+    <div class="row os-onyx">
+      <div><input id="vipName1" value="vip-pair1" /></div>
+      <div><input id="vipIp1" value="10.234.23.254/24" /></div>
+    </div>
+
+      <hr>
+      <h2>Pair2 (C/D)</h2>
+
+    <label class="os-onyx">Onyx peerlink porte</label>
+    <div class="row os-onyx">
+      <div><input id="onyxPeerPortsC" value="Eth1/21,Eth1/22" /></div>
+      <div><input id="onyxPeerPortsD" value="Eth1/21,Eth1/22" /></div>
+    </div>
+
+    <label class="os-cumulus hidden">Cumulus peerlink porte</label>
+    <div class="row os-cumulus hidden">
+      <div><input id="peerPortsC" value="swp21,swp22" /></div>
+      <div><input id="peerPortsD" value="swp21,swp22" /></div>
+    </div>
+
+    <label class="os-cumulus hidden">Pair2: Cumulus clagd-sys-mac</label>
+    <input class="os-cumulus hidden" id="sysmac2" value="44:38:39:BE:EF:A2" />
+
+    <label class="os-cumulus hidden">Pair2: Cumulus backup IP (peerens mgmt/lo IP)</label>
+    <div class="row os-cumulus hidden">
+      <div><input id="backupC" value="10.0.0.104" /></div>
+      <div><input id="backupD" value="10.0.0.103" /></div>
+    </div>
+
+    <label class="os-onyx">Pair2: Onyx IPL VLAN + IPs (/30)</label>
+    <div class="row3 os-onyx">
+      <div><input id="iplVlan2" value="4001" /></div>
+      <div><input id="iplIpC" value="1.1.2.1/30" /></div>
+      <div><input id="iplIpD" value="1.1.2.2/30" /></div>
+    </div>
+
+      <label class="os-onyx">Pair2: Onyx MLAG VIP navn + IP (mgmt0 subnet)</label>
+      <div class="row os-onyx">
+        <div><input id="vipName2" value="vip-pair2" /></div>
+        <div><input id="vipIp2" value="10.234.24.254/24" /></div>
+      </div>
+    </details>
+
+    <details open>
+      <summary>Uplink (MPO20) <span class="info-tip" data-tip="MLAG port-channel mod upstream netværk.">i</span></summary>
+      <h2>Uplink mod upstream (MLAG) – default MPO20</h2>
+      <div class="row3">
+        <div><label>MPO ID (Uplink)</label><input id="uplinkId" value="20" /></div>
+        <div><label>Uplink VLANs (trunk)</label><input id="uplinkVlans" value="10,20,30,100-110" /></div>
+      </div>
+
+    <label class="os-onyx">Uplink porte pr switch (Onyx)</label>
+    <div class="row os-onyx">
+      <div><input id="uplinkOnyxA" value="Eth1/18" /></div>
+      <div><input id="uplinkOnyxB" value="Eth1/18" /></div>
+    </div>
+    <div class="row os-onyx">
+      <div><input id="uplinkOnyxC" value="Eth1/18" /></div>
+      <div><input id="uplinkOnyxD" value="Eth1/18" /></div>
+    </div>
+
+    <label class="os-cumulus hidden">Uplink porte pr switch (Cumulus)</label>
+    <div class="row os-cumulus hidden">
+      <div><input id="uplinkPortsA" value="swp18" /></div>
+      <div><input id="uplinkPortsB" value="swp18" /></div>
+    </div>
+      <div class="row os-cumulus hidden">
+        <div><input id="uplinkPortsC" value="swp18" /></div>
+        <div><input id="uplinkPortsD" value="swp18" /></div>
+      </div>
+    </details>
+
+    <details open>
+      <summary>Intersite (MPO30) <span class="info-tip" data-tip="MLAG port-channel mellem sites.">i</span></summary>
+      <h2>Intersite link (MLAG) – default MPO30</h2>
+      <div class="row3">
+        <div><label>MPO ID (Intersite)</label><input id="siteId" value="30" /></div>
+        <div><label>Intersite VLANs (trunk)</label><input id="siteVlans" value="10,20,30,100-110" /></div>
+      </div>
+
+    <label class="os-onyx">Intersite porte pr switch (Onyx)</label>
+    <div class="row os-onyx">
+      <div><input id="siteOnyxA" value="Eth1/20" /></div>
+      <div><input id="siteOnyxB" value="Eth1/20" /></div>
+    </div>
+    <div class="row os-onyx">
+      <div><input id="siteOnyxC" value="Eth1/20" /></div>
+      <div><input id="siteOnyxD" value="Eth1/20" /></div>
+    </div>
+
+    <label class="os-cumulus hidden">Intersite porte pr switch (Cumulus)</label>
+    <div class="row os-cumulus hidden">
+      <div><input id="sitePortsA" value="swp20" /></div>
+      <div><input id="sitePortsB" value="swp20" /></div>
+    </div>
+      <div class="row os-cumulus hidden">
+        <div><input id="sitePortsC" value="swp20" /></div>
+        <div><input id="sitePortsD" value="swp20" /></div>
+      </div>
+    </details>
+
+    <div id="overlapWarn" class="hint warn" style="display:none"></div>
+
+    <details>
+      <summary>Advanced (valgfrit) <span class="info-tip" data-tip="Ekstra/avancerede felter som ofte kan stå tomme.">i</span></summary>
+      <div class="hint">Lad felter stå tomme hvis de ikke skal bruges.</div>
+
+      <details>
+        <summary>VLAN definitioner (ID:navn) <span class="info-tip" data-tip="Format: en VLAN pr. linje, fx 10:Clients">i</span></summary>
+        <label>VLAN liste (en pr. linje: <span class="mono">ID:Navn</span>)</label>
+        <textarea id="vlanDefs" placeholder="10:Clients&#10;20:Servers&#10;30:Voice"></textarea>
+        <div class="hint">
+          Onyx: genererer <span class="mono">vlan &lt;id&gt;</span> + <span class="mono">name</span>.<br>
+          Cumulus: genererer VLAN subinterface-stanzas med <span class="mono">alias</span> (valgfri navngivning).
+        </div>
+      </details>
+
+      <h2>Valgfri native VLAN</h2>
+      <div class="row">
+        <div><label>Uplink native VLAN</label><input id="uplinkNative" value="" placeholder="(tom)" /></div>
+        <div><label>Intersite native VLAN</label><input id="siteNative" value="" placeholder="(tom)" /></div>
+      </div>
+
+      <h2>Onyx: valgfri MLAG system-mac</h2>
+      <div class="os-onyx">
+        <label>Pair1: Onyx MLAG system-mac</label>
+        <input id="onyxSysmac1" value="00:00:5e:00:01:a1" />
+        <label>Pair2: Onyx MLAG system-mac</label>
+        <input id="onyxSysmac2" value="00:00:5e:00:01:a2" />
+      </div>
+
+      <div class="os-cumulus hidden">
+        <h2>Cumulus peer IP mode</h2>
+        <div class="row3">
+          <div>
+            <label>Mode</label>
+            <select id="peerIpMode">
+              <option value="linklocal" selected>linklocal</option>
+              <option value="explicit">explicit</option>
+            </select>
+          </div>
+          <div>
+            <label>Bridge navn</label>
+            <input id="bridge" value="br_default" />
+          </div>
+          <div>
+            <label>(info)</label>
+            <input disabled value="peerlink.4094 (clagd)"/>
+          </div>
+        </div>
+
+        <div id="explicitPeerWrap" style="display:none">
+          <label>Explicit peerlink.4094 IPs (Pair1 og Pair2)</label>
+          <div class="row">
+            <div><input id="peerIpA" value="169.254.1.1/24" /></div>
+            <div><input id="peerIpB" value="169.254.1.2/24" /></div>
+          </div>
+          <div class="row">
+            <div><input id="peerIpC" value="169.254.2.1/24" /></div>
+            <div><input id="peerIpD" value="169.254.2.2/24" /></div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Ekstra interconnect (normal LACP trunk)</h2>
+      <div class="row3">
+        <div class="os-onyx"><label>Onyx Port-Channel ID</label><input id="icPo" value="100" /></div>
+        <div class="os-cumulus hidden"><label>Cumulus bond navn</label><input id="icBond" value="ic" /></div>
+        <div><label>VLANs</label><input id="icVlans" value="" placeholder="(tom)" /></div>
+      </div>
+
+      <label class="os-onyx">Interconnect porte pr switch (Onyx)</label>
+      <div class="row os-onyx">
+        <div><input id="icOnyxA" value="" /></div>
+        <div><input id="icOnyxB" value="" /></div>
+      </div>
+      <div class="row os-onyx">
+        <div><input id="icOnyxC" value="" /></div>
+        <div><input id="icOnyxD" value="" /></div>
+      </div>
+
+      <label class="os-cumulus hidden">Interconnect porte pr switch (Cumulus)</label>
+      <div class="row os-cumulus hidden">
+        <div><input id="icPortsA" value="" /></div>
+        <div><input id="icPortsB" value="" /></div>
+      </div>
+      <div class="row os-cumulus hidden">
+        <div><input id="icPortsC" value="" /></div>
+        <div><input id="icPortsD" value="" /></div>
+      </div>
+    </details>
+
+    <div class="btnrow">
+      <button id="gen">Generér</button>
+      <button class="secondary" id="reset">Nulstil</button>
+    </div>
+
+  </section>
+
+  <section class="card">
+    <div class="tabs">
+      <button class="tab active" data-tab="onyx" id="tabBtnOnyx">Onyx</button>
+      <button class="tab hidden" data-tab="cumulus" id="tabBtnCumulus">Cumulus</button>
+    </div>
+
+    <div id="tab-onyx">
+      <div class="outgrid" id="outgrid-onyx">
+        <div class="outpanel" id="panel-onyxA"><div class="outhead"><strong id="onyxTitleA">Onyx – A</strong><span class="actions"><span class="badge">CLI</span> <button class="secondary" onclick="copyOut('onyxA')">Kopiér</button> <button class="secondary focus-btn" id="focus-onyxA" onclick="toggleFocus('onyxA')">Fokus</button></span></div><textarea id="onyxA" spellcheck="false"></textarea></div>
+        <div class="outpanel" id="panel-onyxB"><div class="outhead"><strong id="onyxTitleB">Onyx – B</strong><span class="actions"><span class="badge">CLI</span> <button class="secondary" onclick="copyOut('onyxB')">Kopiér</button> <button class="secondary focus-btn" id="focus-onyxB" onclick="toggleFocus('onyxB')">Fokus</button></span></div><textarea id="onyxB" spellcheck="false"></textarea></div>
+        <div class="outpanel" id="panel-onyxC"><div class="outhead"><strong id="onyxTitleC">Onyx – C</strong><span class="actions"><span class="badge">CLI</span> <button class="secondary" onclick="copyOut('onyxC')">Kopiér</button> <button class="secondary focus-btn" id="focus-onyxC" onclick="toggleFocus('onyxC')">Fokus</button></span></div><textarea id="onyxC" spellcheck="false"></textarea></div>
+        <div class="outpanel" id="panel-onyxD"><div class="outhead"><strong id="onyxTitleD">Onyx – D</strong><span class="actions"><span class="badge">CLI</span> <button class="secondary" onclick="copyOut('onyxD')">Kopiér</button> <button class="secondary focus-btn" id="focus-onyxD" onclick="toggleFocus('onyxD')">Fokus</button></span></div><textarea id="onyxD" spellcheck="false"></textarea></div>
+      </div>
+    </div>
+
+    <div id="tab-cumulus" style="display:none">
+      <div class="outgrid" id="outgrid-cumulus">
+        <div class="outpanel" id="panel-cumA"><div class="outhead"><strong id="cumTitleA">Cumulus – A</strong><span class="actions"><span class="badge">interfaces</span> <button class="secondary" onclick="copyOut('cumA')">Kopiér</button> <button class="secondary focus-btn" id="focus-cumA" onclick="toggleFocus('cumA')">Fokus</button></span></div><textarea id="cumA" spellcheck="false"></textarea></div>
+        <div class="outpanel" id="panel-cumB"><div class="outhead"><strong id="cumTitleB">Cumulus – B</strong><span class="actions"><span class="badge">interfaces</span> <button class="secondary" onclick="copyOut('cumB')">Kopiér</button> <button class="secondary focus-btn" id="focus-cumB" onclick="toggleFocus('cumB')">Fokus</button></span></div><textarea id="cumB" spellcheck="false"></textarea></div>
+        <div class="outpanel" id="panel-cumC"><div class="outhead"><strong id="cumTitleC">Cumulus – C</strong><span class="actions"><span class="badge">interfaces</span> <button class="secondary" onclick="copyOut('cumC')">Kopiér</button> <button class="secondary focus-btn" id="focus-cumC" onclick="toggleFocus('cumC')">Fokus</button></span></div><textarea id="cumC" spellcheck="false"></textarea></div>
+        <div class="outpanel" id="panel-cumD"><div class="outhead"><strong id="cumTitleD">Cumulus – D</strong><span class="actions"><span class="badge">interfaces</span> <button class="secondary" onclick="copyOut('cumD')">Kopiér</button> <button class="secondary focus-btn" id="focus-cumD" onclick="toggleFocus('cumD')">Fokus</button></span></div><textarea id="cumD" spellcheck="false"></textarea></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Asset version: opdater samme tal her ved JS/CSS ændringer. -->
+<script src="app.js?v=1.0"></script>
+</body>
+</html>
