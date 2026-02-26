@@ -9,8 +9,9 @@ Regel:
 
 1. Når du ændrer i `styles.css` eller `app.js`, skal du opdatere versionstallet i `index.html`.
 2. Brug samme versionstal på begge links.
-3. Brug semantisk versionering, fx `1.0`, `1.1`, `1.2`.
+3. Brug semantisk versionering, fx `1.1.0`, `1.1.1`.
+4. Release-tags kan stadig være to tal, fx `v1.1`.
 
 Eksempel:
 
-Opdater begge linjer i `index.html` fra fx `?v=1.0` til `?v=1.1`.
+Opdater begge linjer i `index.html` fra fx `?v=1.1.0` til `?v=1.1.1`.

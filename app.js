@@ -20,6 +20,137 @@ function derivePeerIp(ipCidr){
 }
 function copyOut(id){ const el=$(id); el.select(); document.execCommand("copy"); }
 let selectedOs = "onyx";
+let siteModel = { sites: [] };
+
+const CONFIG_IDS = [
+  "swA","swB","swC","swD",
+  "peerPo","peerBond","peerVlan","bridge","peerIpMode",
+  "peerIpA","peerIpB","peerIpC","peerIpD",
+  "onyxPeerPortsA","onyxPeerPortsB","onyxPeerPortsC","onyxPeerPortsD",
+  "peerPortsA","peerPortsB","peerPortsC","peerPortsD",
+  "sysmac1","sysmac2","backupA","backupB","backupC","backupD",
+  "iplVlan1","iplIpA","iplIpB","iplVlan2","iplIpC","iplIpD",
+  "vipName1","vipIp1","onyxSysmac1","vipName2","vipIp2","onyxSysmac2",
+  "uplinkId","uplinkVlans","uplinkNative","uplinkOnyxA","uplinkOnyxB","uplinkOnyxC","uplinkOnyxD",
+  "uplinkPortsA","uplinkPortsB","uplinkPortsC","uplinkPortsD",
+  "siteId","siteVlans","siteNative","siteOnyxA","siteOnyxB","siteOnyxC","siteOnyxD",
+  "sitePortsA","sitePortsB","sitePortsC","sitePortsD",
+  "icPo","icBond","icVlans","icOnyxA","icOnyxB","icOnyxC","icOnyxD",
+  "icPortsA","icPortsB","icPortsC","icPortsD",
+  "vlanDefs"
+];
+
+function defaultSiteModelFromHostnames(){
+  return {
+    sites: [
+      { name: "Site1", switches: [{ name: $("swA").value.trim() || "A" }, { name: $("swB").value.trim() || "B" }] },
+      { name: "Site2", switches: [{ name: $("swC").value.trim() || "C" }, { name: $("swD").value.trim() || "D" }] }
+    ]
+  };
+}
+
+function normalizeSiteModel(model){
+  const sites = Array.isArray(model?.sites) ? model.sites : [];
+  return {
+    sites: sites.map((site, i) => ({
+      name: (site?.name || `Site${i+1}`).toString(),
+      switches: (Array.isArray(site?.switches) ? site.switches : []).map((sw, j) => ({
+        name: (sw?.name || `SW${j+1}`).toString()
+      }))
+    }))
+  };
+}
+
+function flattenSwitchNamesFromSites(model){
+  const names = [];
+  (model.sites || []).forEach(site => (site.switches || []).forEach(sw => names.push(sw.name)));
+  return names;
+}
+
+function syncHostnamesFromSiteModel(){
+  const names = flattenSwitchNamesFromSites(siteModel);
+  ["swA","swB","swC","swD"].forEach((id, idx) => {
+    if(names[idx]) $(id).value = names[idx];
+  });
+}
+
+function syncSiteModelFromHostnames(){
+  if(!siteModel.sites.length){
+    siteModel = defaultSiteModelFromHostnames();
+  } else {
+    const names = ["swA","swB","swC","swD"].map(id => $(id).value.trim()).filter(Boolean);
+    let ptr = 0;
+    siteModel.sites.forEach(site => {
+      site.switches.forEach(sw => {
+        if(ptr < names.length) sw.name = names[ptr++];
+      });
+    });
+    while(ptr < names.length){
+      if(!siteModel.sites.length) siteModel.sites.push({ name: "Site1", switches: [] });
+      siteModel.sites[siteModel.sites.length - 1].switches.push({ name: names[ptr++] });
+    }
+  }
+  renderSiteModel();
+}
+
+function renderSiteModel(){
+  const sel = $("siteSelect");
+  sel.innerHTML = "";
+  siteModel.sites.forEach((site, idx) => {
+    const opt = document.createElement("option");
+    opt.value = String(idx);
+    opt.textContent = site.name;
+    sel.appendChild(opt);
+  });
+  const lines = siteModel.sites.map(site => {
+    const switches = (site.switches || []).map(sw => sw.name).join(", ") || "(ingen)";
+    return `${site.name}: ${switches}`;
+  });
+  $("siteList").textContent = lines.length ? lines.join(" | ") : "Ingen sites endnu.";
+}
+
+function collectConfigFromForm(){
+  const config = {};
+  CONFIG_IDS.forEach(id => {
+    const el = $(id);
+    if(!el) return;
+    config[id] = el.value;
+  });
+  return config;
+}
+
+function applyConfigToForm(config){
+  if(!config || typeof config !== "object") return;
+  CONFIG_IDS.forEach(id => {
+    const el = $(id);
+    if(!el || !(id in config)) return;
+    el.value = config[id];
+  });
+  if($("peerIpMode")) $("explicitPeerWrap").style.display = ($("peerIpMode").value==="explicit") ? "block" : "none";
+}
+
+function exportModelJson(){
+  const payload = {
+    version: "1.0",
+    topology: { sites: siteModel.sites },
+    config: collectConfigFromForm()
+  };
+  $("modelJson").value = JSON.stringify(payload, null, 2);
+}
+
+function importModelJson(){
+  try{
+    const parsed = JSON.parse($("modelJson").value);
+    const importedSites = parsed?.topology?.sites || parsed?.sites || [];
+    siteModel = normalizeSiteModel({ sites: importedSites });
+    if(parsed?.config) applyConfigToForm(parsed.config);
+    else syncHostnamesFromSiteModel();
+    renderSiteModel();
+    gen();
+  } catch(e){
+    alert("JSON kunne ikke parses. Tjek format.");
+  }
+}
 
 function syncFocusButtons(grid){
   grid.querySelectorAll(".focus-btn").forEach(btn => btn.textContent = "Fokus");
@@ -413,6 +544,30 @@ document.querySelectorAll(".tab").forEach(btn=>{
 
   $("gen").addEventListener("click", gen);
   $("reset").addEventListener("click", ()=> location.reload());
+  $("addSiteBtn").addEventListener("click", ()=>{
+    const name = $("newSiteName").value.trim();
+    if(!name) return;
+    siteModel.sites.push({ name, switches: [] });
+    $("newSiteName").value = "";
+    renderSiteModel();
+  });
+  $("addSwitchBtn").addEventListener("click", ()=>{
+    const siteIdx = Number($("siteSelect").value || "0");
+    const name = $("newSwitchName").value.trim();
+    if(!name || !siteModel.sites[siteIdx]) return;
+    siteModel.sites[siteIdx].switches.push({ name });
+    $("newSwitchName").value = "";
+    renderSiteModel();
+    syncHostnamesFromSiteModel();
+    gen();
+  });
+  $("syncSitesBtn").addEventListener("click", ()=>{
+    siteModel = defaultSiteModelFromHostnames();
+    renderSiteModel();
+    exportModelJson();
+  });
+  $("exportJsonBtn").addEventListener("click", exportModelJson);
+  $("importJsonBtn").addEventListener("click", importModelJson);
 
   $("tplSn2010").addEventListener("click", ()=>{
     $("swA").value="SN2010-A"; $("swB").value="SN2010-B"; $("swC").value="SN2010-C"; $("swD").value="SN2010-D";
@@ -445,5 +600,8 @@ document.querySelectorAll(".tab").forEach(btn=>{
     gen();
   });
 
+  siteModel = defaultSiteModelFromHostnames();
+  renderSiteModel();
+  exportModelJson();
   setOs("onyx");
   gen();

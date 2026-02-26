@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Mellanox MLAG Generator – 4 switche + Uplink MPO20 + Intersite MPO30 (Onyx + Cumulus)</title>
   <!-- Asset version: opdater dette tal ved ændringer i styles.css eller app.js for at undgå stale Cloudflare cache. -->
-  <link rel="stylesheet" href="styles.css?v=1772104915" />
+  <link rel="stylesheet" href="styles.css?v=1.1.0" />
 </head>
 <body>
 <header>
@@ -16,7 +16,7 @@
         <h1>MLNX Toolbox</h1>
       </div>
     </div>
-    <span class="pill">v1.0</span>
+    <span class="pill">v1.1</span>
   </div>
 </header>
 
@@ -216,6 +216,36 @@
       <div class="hint">Lad felter stå tomme hvis de ikke skal bruges.</div>
 
       <details>
+        <summary>Site-aware model (JSON) <span class="info-tip" data-tip="Sites og switches pr. site. Første 4 switches mappes til A/B/C/D i generatoren.">i</span></summary>
+        <div class="row3">
+          <div>
+            <label>Nyt site</label>
+            <input id="newSiteName" placeholder="fx Site3" />
+          </div>
+          <div style="display:flex;align-items:end"><button class="secondary" id="addSiteBtn" type="button">Tilføj site</button></div>
+          <div style="display:flex;align-items:end"><button class="secondary" id="syncSitesBtn" type="button">Sync fra hostnames</button></div>
+        </div>
+        <div class="row3">
+          <div>
+            <label>Site</label>
+            <select id="siteSelect"></select>
+          </div>
+          <div>
+            <label>Ny switch i site</label>
+            <input id="newSwitchName" placeholder="fx E eller Site3-A" />
+          </div>
+          <div style="display:flex;align-items:end"><button class="secondary" id="addSwitchBtn" type="button">Tilføj switch</button></div>
+        </div>
+        <div id="siteList" class="hint"></div>
+        <div class="btnrow">
+          <button class="secondary" id="exportJsonBtn" type="button">Export JSON</button>
+          <button class="secondary" id="importJsonBtn" type="button">Import JSON</button>
+        </div>
+        <label>JSON</label>
+        <textarea id="modelJson" spellcheck="false" placeholder='{"version":"1.0","topology":{"sites":[{"name":"Site1","switches":[{"name":"A"},{"name":"B"}]}]}}'></textarea>
+      </details>
+
+      <details>
         <summary>VLAN definitioner (ID:navn) <span class="info-tip" data-tip="Format: en VLAN pr. linje, fx 10:Clients">i</span></summary>
         <label>VLAN liste (en pr. linje: <span class="mono">ID:Navn</span>)</label>
         <textarea id="vlanDefs" placeholder="10:Clients&#10;20:Servers&#10;30:Voice"></textarea>
@@ -334,6 +364,6 @@
 </main>
 
 <!-- Asset version: opdater samme tal her ved JS/CSS ændringer. -->
-<script src="app.js?v=1772104915"></script>
+<script src="app.js?v=1.1.0"></script>
 </body>
 </html>
